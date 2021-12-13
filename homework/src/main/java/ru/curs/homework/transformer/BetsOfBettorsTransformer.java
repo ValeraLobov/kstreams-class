@@ -28,8 +28,8 @@ public class BetsOfBettorsTransformer implements StatefulTransformer<String, Lon
 
     @Override
     public KeyValue<String, Long> transform(Bet key, Long value, KeyValueStore<String, Long> stateStore) {
-        long bet_sum = Optional.ofNullable(stateStore.get(key.getBettor())).orElse(0L) + value;
-        stateStore.put(key.getBettor(), bet_sum);
-        return KeyValue.pair(key.getBettor(), bet_sum);
+        long betSum = Optional.ofNullable(stateStore.get(key.getBettor())).orElse(0L) + value;
+        stateStore.put(key.getBettor(), betSum);
+        return KeyValue.pair(key.getBettor(), betSum);
     }
 }

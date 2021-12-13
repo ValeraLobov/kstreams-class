@@ -45,22 +45,28 @@ public class TopologyConfiguration {
                                 ((EventScore) record.value()).getTimestamp())
                 );
 
-        KStream<Bet, Long> bet_count =
+        KStream<Bet, Long> betCount =
                 bets.map(
                         (key, value) -> KeyValue.pair(value, value.getAmount())
                 );
 
         /// Bets of bettors
-        KStream<String, Long> bets_of_bettors_sum = new BetsOfBettorsTransformer().transformStream(streamsBuilder, bet_count);
-        bets_of_bettors_sum.to(BETTOR_AMOUNTS, Produced.with(Serdes.String(), Serdes.Long()));
+        KStream<String, Long> betsOfBettorsSum = new BetsOfBettorsTransformer().transformStream(
+                streamsBuilder,
+                betCount
+        );
+        betsOfBettorsSum.to(BETTOR_AMOUNTS, Produced.with(Serdes.String(), Serdes.Long()));
 
         // Bets for teams
-        KStream<String, Long> bets_for_teams_sum = new BetsForTeamsTransformer().transformStream(streamsBuilder, bet_count);
-        bets_for_teams_sum.to(TEAM_AMOUNTS, Produced.with(Serdes.String(), Serdes.Long()));
+        KStream<String, Long> betsForTeamsSum = new BetsForTeamsTransformer().transformStream(
+                streamsBuilder,
+                betCount
+        );
+        betsForTeamsSum.to(TEAM_AMOUNTS, Produced.with(Serdes.String(), Serdes.Long()));
 
         /// Possible fraud ///
-        KStream<String, Bet> bets_wins = new BetsWinsTransformer().transformStream(streamsBuilder, scores);
-        KStream<String, Fraud> possible_fraud = bets.join(bets_wins,
+        KStream<String, Bet> betsWins = new BetsWinsTransformer().transformStream(streamsBuilder, scores);
+        KStream<String, Fraud> possibleFraud = bets.join(betsWins,
                 (bet, winningBet) -> Fraud.builder()
                                 .bettor(bet.getBettor())
                                 .outcome(bet.getOutcome())
@@ -72,7 +78,7 @@ public class TopologyConfiguration {
                 JoinWindows.of(Duration.ofSeconds(1)).before(Duration.ZERO),
                 StreamJoined.with(Serdes.String(), new JsonSerde<>(Bet.class), new JsonSerde<>(Bet.class))
         ).selectKey((k, fraud) -> fraud.getBettor());
-        possible_fraud.to(POSSIBLE_FRAUDS, Produced.with(Serdes.String(), new JsonSerde<>(Fraud.class)));
+        possibleFraud.to(POSSIBLE_FRAUDS, Produced.with(Serdes.String(), new JsonSerde<>(Fraud.class)));
 
         Topology topology = streamsBuilder.build();
         System.out.println("==============================");

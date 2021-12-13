@@ -33,8 +33,8 @@ public class BetsForTeamsTransformer implements StatefulTransformer<String, Long
             return null;
         }
         String name = key.getOutcome() == Outcome.H ? names[0] : names[1];
-        long bet_sum = Optional.ofNullable(stateStore.get(name)).orElse(0L) + value;
-        stateStore.put(name, bet_sum);
-        return KeyValue.pair(name, bet_sum);
+        long betSum = Optional.ofNullable(stateStore.get(name)).orElse(0L) + value;
+        stateStore.put(name, betSum);
+        return KeyValue.pair(name, betSum);
     }
 }
